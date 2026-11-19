@@ -1,0 +1,20 @@
+{
+  "name": "Riuman y los 5 Reinos",
+  "short_name": "Riuman",
+  "description": "Versión oficial de Riuman para navegador.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a12",
+  "theme_color": "#1b1050",
+  "icons": [
+    {
+      "src": "./riuman-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

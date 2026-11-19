@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1050">
+  <meta name="description" content="Riuman y los 5 Reinos — versión oficial para navegador.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./riuman-icon.svg" type="image/svg+xml">
+  <title>Riuman · Iniciando</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#0a0a12;color:#fff1c9;font-family:'Courier New',monospace}
+    body{display:grid;place-items:center;min-height:100vh;min-height:100dvh;padding:24px}
+    main{text-align:center;width:min(100%,460px);padding:28px;border:1px solid rgba(255,224,138,.55);border-radius:22px;background:linear-gradient(145deg,rgba(59,42,143,.6),rgba(10,10,30,.95));box-shadow:0 18px 50px rgba(0,0,0,.45)}
+    .logo{font-size:clamp(38px,12vw,58px);font-weight:900;letter-spacing:5px;color:#ffd166;text-shadow:3px 3px 0 #6d28d9,6px 6px 0 #1e1b4b}
+    p{color:#cbd5e1;line-height:1.55}
+    .spin{width:28px;height:28px;margin:22px auto 0;border:3px solid rgba(255,255,255,.18);border-top-color:#ffd166;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    button{border:1px solid #ffe08a;border-radius:12px;padding:11px 17px;background:#5b3bb5;color:#fff;font:bold 14px 'Courier New',monospace;cursor:pointer}
+    #retry{display:none;margin-top:14px}
+    @media(prefers-reduced-motion:reduce){.spin{animation:none}}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="logo">RIUMAN</div>
+    <p id="status">Comprobando la versión más reciente…</p>
+    <div class="spin" id="spinner" aria-hidden="true"></div>
+    <button id="retry" type="button">Reintentar</button>
+    <noscript>Activa JavaScript para iniciar el juego.</noscript>
+  </main>
+  <script>
+  (function () {
+    "use strict";
+    const base = new URL("./", location.href);
+    const status = document.getElementById("status");
+    const spinner = document.getElementById("spinner");
+    const retry = document.getElementById("retry");
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register(new URL("sw.js", base).href, {
+        scope: base.pathname,
+        updateViaCache: "none"
+      }).catch(function () {});
+    }
+
+    async function launch() {
+      retry.style.display = "none";
+      spinner.style.display = "block";
+      status.textContent = "Comprobando la versión más reciente…";
+      try {
+        const url = new URL("version.json", base);
+        url.searchParams.set("check", String(Date.now()));
+        const response = await fetch(url.href, { cache: "no-store", credentials: "same-origin" });
+        if (!response.ok) throw new Error("No se pudo leer version.json");
+        const release = await response.json();
+        if (!release || typeof release.version !== "string" || typeof release.entry !== "string") {
+          throw new Error("El archivo de versión no tiene un formato válido");
+        }
+        const target = new URL(release.entry, base);
+        if (target.origin !== location.origin || !target.pathname.startsWith(base.pathname) ||
+            !target.pathname.toLowerCase().endsWith(".html")) {
+          throw new Error("La ruta de la versión no es válida");
+        }
+        status.textContent = "Iniciando Riuman " + release.version + "…";
+        window.location.replace(target.href);
+      } catch (_) {
+        spinner.style.display = "none";
+        status.textContent = "No se pudo comprobar la versión. Comprueba tu conexión e inténtalo de nuevo.";
+        retry.style.display = "inline-block";
+      }
+    }
+
+    retry.addEventListener("click", launch);
+    launch();
+  })();
+  </script>
+</body>
+</html>
